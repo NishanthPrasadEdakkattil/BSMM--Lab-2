@@ -1,14 +1,28 @@
 ---
 title: "BSMM-lab-2"
 subtitle: "BSMM 8740 Fall 2023"
-author: "Add your name here"
-date: "Add the date here"
+author: "Nishanth Prasad Edakkattil "
+date: "September 25"
 format: html
 editor: visual
 self-contained: true
 ---
 
 ## Setup
+```{r}
+install.packages("magrittr")
+install.packages("tidyverse")
+install.packages("tidymodels")
+install.packages("gt")
+install.packages("gtExtras")
+install.packages("DataExplorer")
+library(magrittr)     # the pipe
+library(tidyverse)    # for data wrangling + visualization
+library(tidymodels)   # for modeling
+library(gt)           # for making display tables
+library(gtExtras)     # helper functions for beautiful tables
+library(DataExplorer) #
+```
 
 Load packages and data:
 
@@ -16,11 +30,27 @@ Load packages and data:
 #| message: false
 the_tate <- readr::read_delim("data/the-tate-collection.csv", ";", escape_double = FALSE, trim_ws = TRUE)
 the_tate_artists <- readr::read_csv("data/the-tate-artists.csv")
+
 ```
 
 ## Exercises
+```{r}
+view(the_tate)
+view(the_tate_artists)
+```
 
 ### Exercise 1
+```{r}
+the_tate |>
+dplyr::summarize(
+  unique.length= unique(artist),
+  (min_year=(min(year),na.rm=TRUE)),
+  max_year=max(year),
+  min_acquisitionYear= min(acquisitionYear),
+  max_acquisitionYear= max(acquisitionYear)
+  
+)
+```
 
 The `the_tate` dataset has \_\_\_ unique artists who worked from \_\_\_ to \_\_\_. The works were acquired between the years \_\_\_ and \_\_\_.
 
