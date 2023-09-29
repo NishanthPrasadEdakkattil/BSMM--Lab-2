@@ -1,5 +1,5 @@
 ---
-title: "BSMM-lab-2"
+title: "BSMM_lab_2"
 subtitle: "BSMM 8740 Fall 2023"
 author: "Nishanth Prasad Edakkattil "
 date: "September 25"
@@ -17,6 +17,10 @@ install.packages("tidymodels")
 install.packages("gt")
 install.packages("gtExtras")
 install.packages("DataExplorer")
+
+```
+
+```{r}
 library(magrittr)     # the pipe
 library(tidyverse)    # for data wrangling + visualization
 library(tidymodels)   # for modeling
@@ -38,15 +42,17 @@ the_tate_artists <- readr::read_csv("data/the-tate-artists.csv")
 
 ```{r}
 view(the_tate)
+```
+
+```{r}
 view(the_tate_artists)
 ```
 
 ### Exercise 1
 
 ```{r}
-the_tate |>
-dplyr::summarize(
-  unique.length= unique(artist),
+the_tate %>% dplyr::summarize(
+  unique.length= unique(artistId),
   min_year= min(year,na.rm=TRUE),
   max_year=max(year,na.rm= TRUE),
   min_acquisitionYear= min(acquisitionYear,na.rm=TRUE),
@@ -54,23 +60,14 @@ dplyr::summarize(
 )
 ```
 
-The `the_tate` dataset has 3336 unique artists who worked from 1545 to 2012. The works were acquired between the years 1823 and 2013.
-
-### Exercise 2
+The `the_tate` dataset has 3342 unique artists who worked from 1545 to 2012. The works were acquired between the years 1823 and 2013.
 
 ```{r}
 DataExplorer::introduce(the_tate)
-
-```
-
-```{r}
 DataExplorer::plot_missing(the_tate)
 ```
 
-```{r}
-
-tibble::as_tibble(the_tate)
-```
+### Exercise 2
 
 ```{r}
 missing_dates<- sum(is.na(the_tate$year))
@@ -81,46 +78,92 @@ print(missing_dates)
 
 library(dplyr)
 library(tibble)
-artist_missingworks<- table(the_tate$artist)
-artist_missingworks_tibble <- as_tibble(artist_missingworks, .name_repair = "minimal") 
-artist_missingworks_sorted<- artist_missingworks_tibble %>% arrange(desc(artist_missingworks_tibble))
-print(artist_missingworks_sorted)
+#Displaying the missing works for each artist
+artist_missing_works <- the_tate %>%
+  group_by(artist) %>%
+  summarize(Missing_Works = sum(is.na(year))) %>%
+  filter(Missing_Works > 0) %>%
+  arrange(desc(Missing_Works))
+print(artist_missing_works)
+#Finding the no of artists
+artist_missing_works <- artist_missing_works %>% dplyr::mutate(pct_missing_years = (Missing_Works/sum(Missing_Works))*100,cumsum(pct_missing_years))
+count(artist_missing_works)
 
 
 
 ```
 
-How number of works with missing dates is 5397.
+How many number of works with missing dates is 5397.
 
-The number of artists whose works have missing dates is .
+The number of artists whose works have missing dates is 461
 
-It would require resolving missing year data for only \_\_ artists resolve resolve at least 50% of the missing data.
+It would require resolving missing year data for only 11 artists resolve resolve at least 50% of the missing data.
 
-The missing year data likely to be classified as \_\_\_\_.
+The missing year data likely to be classified as MAR.
 
 ### Exercise 3
 
-The artist with the most works in the Tate collection is \_\_\_.
+```{r}
+artist_works <- the_tate %>% dplyr::group_by(artistId) %>% dplyr::summarize(
+  number_of_works = n()
+) %>% dplyr::arrange(desc(number_of_works))
 
-The artist with the tenth-most works in the Tate collection is \_\_\_.
+artist_works <- artist_works %>% dplyr::mutate(pct_of_work = (number_of_works/sum(number_of_works))*100)
+
+artist_works %>% gt() %>% 
+  gt_theme_538() 
+
+the_tate %>% dplyr::filter(artistId %in% c(558,2121)) %>% dplyr::select(artistId,artist) %>% distinct(artistId,artist) 
+```
+
+The artist with the most works in the Tate collection is Turner, Joseph Mallord William having artist ID 558.
+
+The artist with the tenth-most works in the Tate collection is Warhol, Andy having artistID = 2121.
 
 ### Exercise 4
 
-The artist with the greatest number of works in the Tate collection represent \_\_\_% of the total number of works
+The artist with the greatest number of works in the Tate collection represent 56.919697692% of the total number of works
 
 ### Exercise 5
 
-There are \_\_ duplicate artist-title pairs
+```{r}
+total_artist_title_pairs <- the_tate %>% dplyr::select(artistId , title) %>% tibble::as_tibble() %>% count()
+total_artist_title_pairs_distinct <- the_tate %>% dplyr::select(artistId , title) %>% dplyr::distinct() %>% count()
+#showing the total number of rows
+print(total_artist_title_pairs)
+#showing the total number of distinct rows
+print(total_artist_title_pairs_distinct)
+#showing the total number of duplicate rows.
+print(total_artist_title_pairs-total_artist_title_pairs_distinct)
+```
+
+There are 23705 duplicate artist-title pairs
 
 ### Exercise 6
 
-The artist with the largest work in the tate collection is \_\_\_
+```{r}
+the_tate_area <- the_tate %>% dplyr::select(artist,artistId,width,height) %>% dplyr::mutate(area = (width*height)/10000) %>% tidyr::drop_na(area) %>% dplyr::arrange(desc(area))
 
-The artist with the smallest work in the collection is \_\_\_. The smallest work has area \_\_\_ $\text{cm}^2$
+dplyr::slice_head(the_tate_area)
+dplyr::slice_tail(the_tate_area)
+```
+
+The artist with the largest work in the tate collection is Therrien, Robert
+
+The artist with the smallest work in the collection is Mesens, E.L.T.. The smallest work has area 0.0237 $\text{cm}^2$
 
 ### Exercise 7
 
 ...
+
+```{r}
+#Joining the tables
+joined_data <- the_tate %>% dplyr::left_join(the_tate_artists, by = join_by(artistId == id)) %>% tidyr::drop_na(gender)
+
+joined_data <- joined_data  %>% dplyr::group_by(gender)
+
+view(joined_data)
+```
 
 ### Exercise 8
 
